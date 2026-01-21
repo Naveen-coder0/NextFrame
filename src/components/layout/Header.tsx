@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 
 const navLinks = [
   { name: "Home", path: "/" },
@@ -16,8 +17,29 @@ const navLinks = [
 export const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
+  const [user, setUser] = useState<any>(null);
 
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  /* Detect login state */
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  /* Scroll effect */
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -29,6 +51,11 @@ export const Header = () => {
   useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [location]);
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
 
   return (
     <>
@@ -46,12 +73,12 @@ export const Header = () => {
           <nav className="flex items-center justify-between h-20">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center transition-all duration-300 group-hover:shadow-glow group-hover:scale-105">
-                <span className="text-primary-foreground font-display font-bold text-xl">N</span>
+              <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center group-hover:shadow-glow">
+                <span className="text-primary-foreground font-bold text-xl">
+                  N
+                </span>
               </div>
-              <span className="font-display font-bold text-xl text-foreground">
-                NextFrame
-              </span>
+              <span className="font-bold text-xl">NextFrame</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -60,9 +87,9 @@ export const Header = () => {
                 <Link
                   key={link.path}
                   to={link.path}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     location.pathname === link.path
-                      ? "text-primary bg-primary/10 shadow-inner-light"
+                      ? "text-primary bg-primary/10"
                       : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                   }`}
                 >
@@ -71,18 +98,40 @@ export const Header = () => {
               ))}
             </div>
 
-            {/* Desktop CTA */}
-            <div className="hidden lg:flex items-center gap-4">
-              <Button asChild variant="default" size="sm" className="btn-glow">
-                <Link to="/contact">Get Started</Link>
-              </Button>
+            {/* Desktop Auth Buttons */}
+            <div className="hidden lg:flex items-center gap-3">
+              {!user ? (
+                <>
+                  {/* Logged OUT */}
+                  <Link
+                    to="/login"
+                    className="px-4 py-2 rounded-lg text-sm font-medium border border-border/60"
+                  >
+                    Login
+                  </Link>
+
+                  <Button asChild size="sm" className="btn-glow">
+                    <Link to="/login">Sign Up</Link>
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {/* Logged IN */}
+                  <Button asChild variant="outline" size="sm">
+                    <Link to="/dashboard">Dashboard</Link>
+                  </Button>
+
+                  <Button size="sm" onClick={logout}>
+                    Logout
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
-              aria-label="Toggle menu"
+              className="lg:hidden p-2 rounded-lg"
             >
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -97,40 +146,42 @@ export const Header = () => {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
             className="fixed inset-x-0 top-20 z-40 lg:hidden"
           >
-            <div className="glass-card-elevated mx-4 rounded-2xl overflow-hidden">
-              <div className="p-6 space-y-2">
-                {navLinks.map((link, index) => (
-                  <motion.div
+            <div className="glass-card-elevated mx-4 rounded-2xl">
+              <div className="p-6 space-y-3">
+                {navLinks.map((link) => (
+                  <Link
                     key={link.path}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.05 }}
+                    to={link.path}
+                    className="block px-4 py-3 rounded-xl hover:bg-muted/50"
                   >
-                    <Link
-                      to={link.path}
-                      className={`block px-4 py-3 rounded-xl text-base font-medium transition-all ${
-                        location.pathname === link.path
-                          ? "text-primary bg-primary/10"
-                          : "text-foreground hover:bg-muted/50"
-                      }`}
-                    >
-                      {link.name}
-                    </Link>
-                  </motion.div>
+                    {link.name}
+                  </Link>
                 ))}
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: navLinks.length * 0.05 }}
-                  className="pt-4"
-                >
-                  <Button asChild className="w-full btn-glow" size="lg">
-                    <Link to="/contact">Get Started</Link>
-                  </Button>
-                </motion.div>
+
+                {!user ? (
+                  <>
+                    <Link
+                      to="/login"
+                      className="block w-full text-center px-4 py-3 rounded-xl border"
+                    >
+                      Login
+                    </Link>
+                    <Button asChild className="w-full btn-glow">
+                      <Link to="/login">Sign Up</Link>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button asChild className="w-full">
+                      <Link to="/dashboard">Dashboard</Link>
+                    </Button>
+                    <Button className="w-full" onClick={logout}>
+                      Logout
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>

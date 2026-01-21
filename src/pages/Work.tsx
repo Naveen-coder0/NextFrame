@@ -31,7 +31,7 @@ const portfolioProjects = [
   },
 ];
 
-const workProjects = [
+const clientProjects = [
   {
     name: "Salon Website",
     type: "Salon Business",
@@ -46,7 +46,7 @@ const workProjects = [
     img: "/previews/shoes.png",
     link: "https://strid-shoes-store.vercel.app/",
     description:
-      "Modern e-commerce store with conversion-focused layout.",
+      "Modern e-commerce store with conversion-focused layout and clean UI.",
   },
   {
     name: "Serenity Spa",
@@ -77,20 +77,20 @@ export default function Work() {
               Our <span className="text-gradient glow-text">Work</span>
             </motion.h1>
             <p className="text-xl text-muted-foreground">
-              Big, clean previews of real projects.
+              Personal portfolios & real client projects.
             </p>
           </div>
         </div>
       </section>
 
-      {/* PORTFOLIO — 2 COL */}
+      {/* ================= PORTFOLIO (2 COL) ================= */}
       <section className="section-padding">
         <div className="container-wide mx-auto">
-          <h2 className="text-4xl font-bold mb-12">
+          <h2 className="text-4xl font-bold mb-14">
             Personal Portfolios
           </h2>
 
-          <StaggerContainer className="grid md:grid-cols-2 gap-12">
+          <StaggerContainer className="grid md:grid-cols-2 gap-14">
             {portfolioProjects.map((p) => (
               <ProjectCard key={p.name} project={p} />
             ))}
@@ -98,15 +98,15 @@ export default function Work() {
         </div>
       </section>
 
-      {/* WORK — 3 COL */}
+      {/* ================= CLIENT WORK (2 COL FIXED) ================= */}
       <section className="section-padding pt-0">
         <div className="container-wide mx-auto">
-          <h2 className="text-4xl font-bold mb-12">
-            Client Work
+          <h2 className="text-4xl font-bold mb-14">
+            Client Projects
           </h2>
 
-          <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-12">
-            {workProjects.map((p) => (
+          <StaggerContainer className="grid md:grid-cols-2 gap-14">
+            {clientProjects.map((p) => (
               <ProjectCard key={p.name} project={p} />
             ))}
           </StaggerContainer>
@@ -118,8 +118,11 @@ export default function Work() {
         <div className="container-wide mx-auto text-center">
           <AnimatedSection>
             <h2 className="text-4xl font-bold mb-6">
-              Want Something Like This?
+              Want Your Project Here?
             </h2>
+            <p className="text-lg text-muted-foreground mb-8">
+              Let’s build something bold and professional.
+            </p>
             <Button asChild size="lg">
               <Link to="/contact">Start Your Project</Link>
             </Button>
@@ -136,8 +139,8 @@ function ProjectCard({ project }: any) {
   return (
     <StaggerItem>
       <div className="glass-card hover-lift flex flex-col">
-        {/* IMAGE — BIG & CLIPPED */}
-        <div className="relative h-[320px] w-full overflow-hidden">
+        {/* IMAGE */}
+        <div className="relative h-[340px] w-full overflow-hidden">
           <img
             src={project.img}
             alt={project.name}

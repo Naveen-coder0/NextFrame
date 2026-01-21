@@ -1,11 +1,17 @@
+import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import Progress from "./pages/Progress";
+import Complaints from "./pages/Complaints";
+import Profile from "./pages/Profile";
+
 
 import ScrollToTop from "@/components/ui/ScrollToTop";
+import { supabase } from "@/lib/supabase";
 
 import Index from "./pages/Index";
 import About from "./pages/About";
@@ -14,6 +20,8 @@ import Work from "./pages/Work";
 import Process from "./pages/Process";
 import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -38,62 +46,40 @@ const AnimatedRoutes = () => {
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
+        {/* Login */}
         <Route
-          path="/"
+          path="/login"
           element={
             <PageWrapper>
-              <Index />
+              <Login />
             </PageWrapper>
           }
         />
+
+        {/* Dashboard (after login) */}
         <Route
-          path="/about"
+          path="/dashboard"
           element={
             <PageWrapper>
-              <About />
+              <Dashboard />
             </PageWrapper>
           }
         />
-        <Route
-          path="/services"
-          element={
-            <PageWrapper>
-              <Services />
-            </PageWrapper>
-          }
-        />
-        <Route
-          path="/work"
-          element={
-            <PageWrapper>
-              <Work />
-            </PageWrapper>
-          }
-        />
-        <Route
-          path="/process"
-          element={
-            <PageWrapper>
-              <Process />
-            </PageWrapper>
-          }
-        />
-        <Route
-          path="/contact"
-          element={
-            <PageWrapper>
-              <Contact />
-            </PageWrapper>
-          }
-        />
-        <Route
-          path="*"
-          element={
-            <PageWrapper>
-              <NotFound />
-            </PageWrapper>
-          }
-        />
+
+        {/* Public Pages */}
+        <Route path="/dashboard/progress" element={<Progress />} />
+        <Route path="/dashboard/complaints" element={<Complaints />} />
+        <Route path="/dashboard/profile" element={<Profile />} />
+
+        <Route path="/" element={<PageWrapper><Index /></PageWrapper>} />
+        <Route path="/about" element={<PageWrapper><About /></PageWrapper>} />
+        <Route path="/services" element={<PageWrapper><Services /></PageWrapper>} />
+        <Route path="/work" element={<PageWrapper><Work /></PageWrapper>} />
+        <Route path="/process" element={<PageWrapper><Process /></PageWrapper>} />
+        <Route path="/contact" element={<PageWrapper><Contact /></PageWrapper>} />
+
+        {/* 404 */}
+        <Route path="*" element={<PageWrapper><NotFound /></PageWrapper>} />
       </Routes>
     </AnimatePresence>
   );
@@ -101,18 +87,42 @@ const AnimatedRoutes = () => {
 
 /* ---------------- App Root ---------------- */
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
+const App = () => {
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<any>(null);
 
-      <BrowserRouter>
-        <ScrollToTop /> {/* ✅ FIXES SCROLL ISSUE */}
-        <AnimatedRoutes />
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+      setLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  if (loading) return null;
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+
+        <BrowserRouter>
+          <ScrollToTop />
+          <AnimatedRoutes />
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
